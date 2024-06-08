@@ -1,0 +1,1090 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model admin_sys_notice {
+  id                                                 BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  title                                              String?           @db.VarChar(255)
+  content                                            String?           @db.LongText
+  type                                               String?           @db.VarChar(255)
+  state                                              Boolean?          @default(false)
+  recipient_id                                       String?           @db.VarChar(32)
+  admin_id                                           String?           @db.VarChar(32)
+  gmt_create                                         DateTime?         @default(now()) @db.DateTime(0)
+  gmt_modified                                       DateTime?         @default(now()) @db.DateTime(0)
+  user_info_admin_sys_notice_recipient_idTouser_info user_info?        @relation("admin_sys_notice_recipient_idTouser_info", fields: [recipient_id], references: [uuid], onDelete: Cascade, map: "admin_sys_notice_ibfk_1")
+  user_info_admin_sys_notice_admin_idTouser_info     user_info?        @relation("admin_sys_notice_admin_idTouser_info", fields: [admin_id], references: [uuid], onDelete: Cascade, map: "admin_sys_notice_ibfk_2")
+  user_sys_notice                                    user_sys_notice[]
+
+  @@index([admin_id], map: "admin_id")
+  @@index([recipient_id], map: "recipient_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model announcement {
+  id                   BigInt                 @id @default(autoincrement()) @db.UnsignedBigInt
+  title                String                 @db.VarChar(255)
+  content              String?                @db.LongText
+  uid                  String?                @db.VarChar(255)
+  status               Int?                   @default(0)
+  gid                  BigInt?                @db.UnsignedBigInt
+  gmt_create           DateTime?              @default(now()) @db.DateTime(0)
+  gmt_modified         DateTime?              @default(now()) @db.DateTime(0)
+  user_info            user_info?             @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "announcement_ibfk_1")
+  group                group?                 @relation(fields: [gid], references: [id], onDelete: Cascade, map: "announcement_ibfk_2")
+  contest_announcement contest_announcement[]
+
+  @@index([gid], map: "announcement_ibfk_2")
+  @@index([uid], map: "uid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model auth {
+  id           BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  name         String?     @db.VarChar(100)
+  permission   String?     @db.VarChar(100)
+  status       Int         @default(0) @db.TinyInt
+  gmt_create   DateTime?   @default(now()) @db.DateTime(0)
+  gmt_modified DateTime?   @default(now()) @db.DateTime(0)
+  role_auth    role_auth[]
+}
+
+model category {
+  id           Int          @id @default(autoincrement())
+  name         String?      @db.VarChar(255)
+  gmt_create   DateTime?    @default(now()) @db.DateTime(0)
+  gmt_modified DateTime?    @default(now()) @db.DateTime(0)
+  discussion   discussion[]
+}
+
+model code_template {
+  id           Int       @id @default(autoincrement())
+  pid          BigInt    @db.UnsignedBigInt
+  lid          BigInt    @db.UnsignedBigInt
+  code         String    @db.LongText
+  status       Boolean?  @default(false)
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  problem      problem   @relation(fields: [pid], references: [id], onDelete: Cascade, map: "code_template_ibfk_1")
+  language     language  @relation(fields: [lid], references: [id], onDelete: Cascade, map: "code_template_ibfk_2")
+
+  @@index([lid], map: "lid")
+  @@index([pid], map: "pid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model comment {
+  id           Int            @id @default(autoincrement())
+  cid          BigInt?        @db.UnsignedBigInt
+  did          Int?
+  content      String?        @db.LongText
+  from_uid     String         @db.VarChar(32)
+  from_name    String?        @db.VarChar(255)
+  from_avatar  String?        @db.VarChar(255)
+  from_role    String?        @db.VarChar(20)
+  like_num     Int?           @default(0)
+  status       Int?           @default(0)
+  gmt_create   DateTime?      @default(now()) @db.DateTime(0)
+  gmt_modified DateTime?      @default(now()) @db.DateTime(0)
+  user_info    user_info?     @relation(fields: [from_avatar], references: [avatar], onDelete: Cascade, map: "comment_ibfk_6")
+  discussion   discussion?    @relation(fields: [did], references: [id], onDelete: Cascade, map: "comment_ibfk_7")
+  contest      contest?       @relation(fields: [cid], references: [id], onDelete: Cascade, map: "comment_ibfk_8")
+  comment_like comment_like[]
+  reply        reply[]
+
+  @@index([cid], map: "cid")
+  @@index([did], map: "comment_ibfk_7")
+  @@index([from_avatar], map: "from_avatar")
+  @@index([from_uid], map: "uid")
+}
+
+model comment_like {
+  id           Int       @id @default(autoincrement())
+  uid          String    @db.VarChar(255)
+  cid          Int
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  user_info    user_info @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "comment_like_ibfk_1")
+  comment      comment   @relation(fields: [cid], references: [id], onDelete: Cascade, map: "comment_like_ibfk_2")
+
+  @@index([cid], map: "cid")
+  @@index([uid], map: "uid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model contest {
+  id                   BigInt                 @default(autoincrement()) @db.UnsignedBigInt
+  uid                  String                 @db.VarChar(32)
+  author               String?                @db.VarChar(255)
+  title                String?                @db.VarChar(255)
+  type                 Int                    @default(0)
+  description          String?                @db.LongText
+  source               Int?                   @default(0)
+  auth                 Int
+  pwd                  String?                @db.VarChar(255)
+  start_time           DateTime?              @db.DateTime(0)
+  end_time             DateTime?              @db.DateTime(0)
+  duration             BigInt?
+  seal_rank            Boolean?               @default(false)
+  seal_rank_time       DateTime?              @db.DateTime(0)
+  auto_real_rank       Boolean?               @default(true)
+  status               Int?
+  visible              Boolean?               @default(true)
+  open_print           Boolean?               @default(false)
+  open_account_limit   Boolean?               @default(false)
+  account_limit_rule   String?                @db.MediumText
+  rank_show_name       String?                @default("username") @db.VarChar(20)
+  open_rank            Boolean?               @default(false)
+  star_account         String?                @db.MediumText
+  oi_rank_score_type   String?                @default("Recent") @db.VarChar(255)
+  is_group             Boolean?               @default(false)
+  gid                  BigInt?                @db.UnsignedBigInt
+  award_type           Int?                   @default(0)
+  award_config         String?                @db.Text
+  allow_end_submit     Boolean?               @default(false)
+  gmt_create           DateTime?              @default(now()) @db.DateTime(0)
+  gmt_modified         DateTime?              @default(now()) @db.DateTime(0)
+  comment              comment[]
+  user_info            user_info              @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "contest_ibfk_1")
+  group                group?                 @relation(fields: [gid], references: [id], onDelete: Cascade, map: "contest_ibfk_2")
+  contest_announcement contest_announcement[]
+  contest_explanation  contest_explanation[]
+  contest_print        contest_print[]
+  contest_problem      contest_problem[]
+  contest_record       contest_record[]
+  contest_register     contest_register[]
+  contest_score        contest_score[]
+
+  @@id([id, uid])
+  @@index([gid], map: "contest_ibfk_2")
+  @@index([uid], map: "uid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model contest_announcement {
+  id           BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  aid          BigInt       @db.UnsignedBigInt
+  cid          BigInt       @db.UnsignedBigInt
+  gmt_create   DateTime?    @default(now()) @db.DateTime(0)
+  gmt_modified DateTime?    @default(now()) @db.DateTime(0)
+  contest      contest      @relation(fields: [cid], references: [id], onDelete: Cascade, map: "contest_announcement_ibfk_1")
+  announcement announcement @relation(fields: [aid], references: [id], onDelete: Cascade, map: "contest_announcement_ibfk_2")
+
+  @@index([cid], map: "contest_announcement_ibfk_1")
+  @@index([aid], map: "contest_announcement_ibfk_2")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model contest_explanation {
+  id           BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  cid          BigInt    @db.UnsignedBigInt
+  uid          String    @db.VarChar(32)
+  content      String?   @db.LongText
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  contest      contest   @relation(fields: [cid], references: [id], onDelete: Cascade, map: "contest_explanation_ibfk_1")
+  user_info    user_info @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "contest_explanation_ibfk_2")
+
+  @@index([cid], map: "contest_explanation_ibfk_1")
+  @@index([uid], map: "uid")
+}
+
+model contest_print {
+  id           BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  username     String?    @db.VarChar(100)
+  realname     String?    @db.VarChar(100)
+  cid          BigInt?    @db.UnsignedBigInt
+  content      String     @db.LongText
+  status       Int?       @default(0)
+  gmt_create   DateTime?  @default(now()) @db.DateTime(0)
+  gmt_modified DateTime?  @default(now()) @db.DateTime(0)
+  contest      contest?   @relation(fields: [cid], references: [id], onDelete: Cascade, map: "contest_print_ibfk_1")
+  user_info    user_info? @relation(fields: [username], references: [username], onDelete: Cascade, map: "contest_print_ibfk_2")
+
+  @@index([cid], map: "cid")
+  @@index([username], map: "username")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model contest_problem {
+  id             BigInt           @default(autoincrement()) @db.UnsignedBigInt
+  display_id     String           @db.VarChar(255)
+  cid            BigInt           @db.UnsignedBigInt
+  pid            BigInt           @db.UnsignedBigInt
+  display_title  String           @db.VarChar(255)
+  color          String?          @db.VarChar(255)
+  gmt_create     DateTime?        @default(now()) @db.DateTime(0)
+  gmt_modified   DateTime?        @default(now()) @db.DateTime(0)
+  contest        contest          @relation(fields: [cid], references: [id], onDelete: Cascade, map: "contest_problem_ibfk_1")
+  problem        problem          @relation(fields: [pid], references: [id], onDelete: Cascade, map: "contest_problem_ibfk_2")
+  contest_record contest_record[]
+
+  @@id([id, cid, pid])
+  @@unique([display_id, cid, pid], map: "display_id")
+  @@index([cid], map: "contest_problem_ibfk_1")
+  @@index([pid], map: "contest_problem_ibfk_2")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model contest_record {
+  id              BigInt           @default(autoincrement()) @db.UnsignedBigInt
+  cid             BigInt?          @db.UnsignedBigInt
+  uid             String           @db.VarChar(255)
+  pid             BigInt?          @db.UnsignedBigInt
+  cpid            BigInt?          @db.UnsignedBigInt
+  username        String?          @db.VarChar(255)
+  realname        String?          @db.VarChar(255)
+  display_id      String?          @db.VarChar(255)
+  submit_id       BigInt           @db.UnsignedBigInt
+  status          Int?
+  submit_time     DateTime         @db.DateTime(0)
+  time            BigInt?          @db.UnsignedBigInt
+  score           Int?
+  use_time        Int?
+  first_blood     Boolean?         @default(false)
+  checked         Boolean?         @default(false)
+  gmt_create      DateTime?        @default(now()) @db.DateTime(0)
+  gmt_modified    DateTime?        @default(now()) @db.DateTime(0)
+  contest         contest?         @relation(fields: [cid], references: [id], onDelete: Cascade, map: "contest_record_ibfk_1")
+  user_info       user_info        @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "contest_record_ibfk_2")
+  problem         problem?         @relation(fields: [pid], references: [id], onDelete: Cascade, map: "contest_record_ibfk_3")
+  contest_problem contest_problem? @relation(fields: [cpid], references: [id], onDelete: Cascade, map: "contest_record_ibfk_4")
+  judge           judge            @relation(fields: [submit_id], references: [submit_id], onDelete: Cascade, map: "contest_record_ibfk_5")
+
+  @@id([id, submit_id])
+  @@index([cpid], map: "cpid")
+  @@index([cid], map: "index_cid")
+  @@index([time], map: "index_time")
+  @@index([pid], map: "pid")
+  @@index([submit_id], map: "submit_id")
+  @@index([uid], map: "uid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model contest_register {
+  id           BigInt    @default(autoincrement()) @db.UnsignedBigInt
+  cid          BigInt    @db.UnsignedBigInt
+  uid          String    @db.VarChar(32)
+  status       Int?      @default(0)
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  contest      contest   @relation(fields: [cid], references: [id], onDelete: Cascade, map: "contest_register_ibfk_1")
+  user_info    user_info @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "contest_register_ibfk_2")
+
+  @@id([id, cid, uid])
+  @@unique([cid, uid], map: "cid_uid_unique")
+  @@index([uid], map: "contest_register_ibfk_2")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model contest_score {
+  id           BigInt    @default(autoincrement()) @db.UnsignedBigInt
+  cid          BigInt    @db.UnsignedBigInt
+  last         Int?
+  change       Int?
+  now          Int?
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  contest      contest   @relation(fields: [cid], references: [id], onDelete: Cascade, map: "contest_score_ibfk_1")
+
+  @@id([id, cid])
+  @@index([cid], map: "contest_score_ibfk_1")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model discussion {
+  id                                     Int                 @id @default(autoincrement())
+  category_id                            Int
+  title                                  String?             @db.VarChar(255)
+  description                            String?             @db.VarChar(255)
+  content                                String?             @db.LongText
+  pid                                    String?             @db.VarChar(255)
+  uid                                    String              @db.VarChar(32)
+  author                                 String              @db.VarChar(255)
+  avatar                                 String?             @db.VarChar(255)
+  role                                   String?             @default("user") @db.VarChar(25)
+  view_num                               Int?                @default(0)
+  like_num                               Int?                @default(0)
+  top_priority                           Boolean?            @default(false)
+  comment_num                            Int?                @default(0)
+  status                                 Int?                @default(0)
+  gid                                    BigInt?             @db.UnsignedBigInt
+  gmt_create                             DateTime?           @default(now()) @db.DateTime(0)
+  gmt_modified                           DateTime?           @default(now()) @db.DateTime(0)
+  comment                                comment[]
+  user_info_discussion_uidTouser_info    user_info           @relation("discussion_uidTouser_info", fields: [uid], references: [uuid], onDelete: NoAction, map: "discussion_ibfk_1")
+  category                               category            @relation(fields: [category_id], references: [id], onDelete: NoAction, map: "discussion_ibfk_2")
+  group                                  group?              @relation(fields: [gid], references: [id], onDelete: Cascade, map: "discussion_ibfk_3")
+  user_info_discussion_avatarTouser_info user_info?          @relation("discussion_avatarTouser_info", fields: [avatar], references: [avatar], onDelete: NoAction, map: "discussion_ibfk_4")
+  problem                                problem?            @relation(fields: [pid], references: [problem_id], onDelete: Cascade, map: "discussion_ibfk_6")
+  discussion_like                        discussion_like[]
+  discussion_report                      discussion_report[]
+
+  @@index([category_id], map: "category_id")
+  @@index([uid], map: "discussion_ibfk_1")
+  @@index([gid], map: "discussion_ibfk_3")
+  @@index([avatar], map: "discussion_ibfk_4")
+  @@index([pid], map: "pid")
+}
+
+model discussion_like {
+  id           Int        @id @default(autoincrement())
+  uid          String     @db.VarChar(255)
+  did          Int
+  gmt_create   DateTime?  @default(now()) @db.DateTime(0)
+  gmt_modified DateTime?  @default(now()) @db.DateTime(0)
+  discussion   discussion @relation(fields: [did], references: [id], onDelete: Cascade, map: "discussion_like_ibfk_1")
+  user_info    user_info  @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "discussion_like_ibfk_2")
+
+  @@index([did], map: "did")
+  @@index([uid], map: "uid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model discussion_report {
+  id           Int         @id @default(autoincrement())
+  did          Int?
+  reporter     String?     @db.VarChar(255)
+  content      String      @db.VarChar(255)
+  status       Boolean?    @default(false)
+  gmt_create   DateTime?   @default(now()) @db.DateTime(0)
+  gmt_modified DateTime?   @default(now()) @db.DateTime(0)
+  discussion   discussion? @relation(fields: [did], references: [id], onDelete: Cascade, map: "discussion_report_ibfk_1")
+  user_info    user_info?  @relation(fields: [reporter], references: [username], onDelete: Cascade, map: "discussion_report_ibfk_2")
+
+  @@index([did], map: "did")
+  @@index([reporter], map: "reporter")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model file {
+  id           BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  uid          String?    @db.VarChar(32)
+  name         String     @db.VarChar(255)
+  suffix       String     @db.VarChar(255)
+  folder_path  String     @db.VarChar(255)
+  file_path    String?    @db.VarChar(255)
+  type         String?    @db.VarChar(255)
+  delete       Boolean?   @default(false)
+  gid          BigInt?    @db.UnsignedBigInt
+  gmt_create   DateTime?  @default(now()) @db.DateTime(0)
+  gmt_modified DateTime?  @default(now()) @db.DateTime(0)
+  user_info    user_info? @relation(fields: [uid], references: [uuid], map: "file_ibfk_1")
+  group        group?     @relation(fields: [gid], references: [id], map: "file_ibfk_2")
+
+  @@index([gid], map: "file_ibfk_2")
+  @@index([uid], map: "uid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model group {
+  id                BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  avatar            String?             @db.VarChar(255)
+  name              String?             @unique(map: "NAME_UNIQUE") @db.VarChar(25)
+  short_name        String?             @unique(map: "short_name") @db.VarChar(10)
+  brief             String?             @db.VarChar(50)
+  description       String?             @db.LongText
+  owner             String              @db.VarChar(255)
+  uid               String              @db.VarChar(32)
+  auth              Int
+  visible           Boolean?            @default(true)
+  status            Boolean?            @default(false)
+  code              String?             @db.VarChar(6)
+  gmt_create        DateTime?           @default(now()) @db.DateTime(0)
+  gmt_modified      DateTime?           @default(now()) @db.DateTime(0)
+  announcement      announcement[]
+  contest           contest[]
+  discussion        discussion[]
+  file              file[]
+  user_info         user_info           @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "group_ibfk_1")
+  group_member      group_member[]
+  judge             judge[]
+  problem           problem[]
+  tag               tag[]
+  training          training[]
+  training_category training_category[]
+
+  @@index([uid], map: "group_ibfk_1")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model group_member {
+  id           BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  gid          BigInt    @db.UnsignedBigInt
+  uid          String    @db.VarChar(32)
+  auth         Int?      @default(1)
+  reason       String?   @db.VarChar(100)
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  group        group     @relation(fields: [gid], references: [id], onDelete: Cascade, map: "group_member_ibfk_1")
+  user_info    user_info @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "group_member_ibfk_2")
+
+  @@unique([gid, uid], map: "gid_uid_unique")
+  @@index([gid], map: "gid")
+  @@index([uid], map: "uid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model judge {
+  submit_id                           BigInt            @default(autoincrement()) @db.UnsignedBigInt
+  pid                                 BigInt            @db.UnsignedBigInt
+  display_pid                         String            @db.VarChar(255)
+  uid                                 String            @db.VarChar(32)
+  username                            String?           @db.VarChar(255)
+  submit_time                         DateTime          @db.DateTime(0)
+  status                              Int?
+  share                               Boolean?          @default(false)
+  error_message                       String?           @db.MediumText
+  time                                Int?
+  memory                              Int?
+  score                               Int?
+  length                              Int?
+  code                                String            @db.LongText
+  language                            String?           @db.VarChar(255)
+  gid                                 BigInt?           @db.UnsignedBigInt
+  cid                                 BigInt            @default(0) @db.UnsignedBigInt
+  cpid                                BigInt?           @default(0) @db.UnsignedBigInt
+  judger                              String?           @db.VarChar(20)
+  ip                                  String?           @db.VarChar(20)
+  version                             Int               @default(0)
+  oi_rank_score                       Int?              @default(0)
+  vjudge_submit_id                    BigInt?           @db.UnsignedBigInt
+  vjudge_username                     String?           @db.VarChar(255)
+  vjudge_password                     String?           @db.VarChar(255)
+  is_manual                           Boolean?          @default(false)
+  gmt_create                          DateTime?         @default(now()) @db.DateTime(0)
+  gmt_modified                        DateTime?         @default(now()) @db.DateTime(0)
+  contest_record                      contest_record[]
+  problem                             problem           @relation(fields: [pid], references: [id], onDelete: Cascade, map: "judge_ibfk_1")
+  user_info_judge_uidTouser_info      user_info         @relation("judge_uidTouser_info", fields: [uid], references: [uuid], onDelete: Cascade, map: "judge_ibfk_2")
+  user_info_judge_usernameTouser_info user_info?        @relation("judge_usernameTouser_info", fields: [username], references: [username], onDelete: Cascade, map: "judge_ibfk_3")
+  group                               group?            @relation(fields: [gid], references: [id], onDelete: Cascade, map: "judge_ibfk_4")
+  judge_case                          judge_case[]
+  training_record                     training_record[]
+  user_acproblem                      user_acproblem[]
+
+  @@id([submit_id, pid, display_pid, uid, cid])
+  @@index([gid], map: "judge_ibfk_4")
+  @@index([pid], map: "pid")
+  @@index([uid], map: "uid")
+  @@index([username], map: "username")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model judge_case {
+  id           BigInt    @default(autoincrement()) @db.UnsignedBigInt
+  submit_id    BigInt    @db.UnsignedBigInt
+  uid          String    @db.VarChar(32)
+  pid          BigInt    @db.UnsignedBigInt
+  case_id      BigInt?
+  status       Int?
+  time         Int?
+  memory       Int?
+  score        Int?
+  group_num    Int?
+  seq          Int?
+  mode         String?   @default("default") @db.VarChar(255)
+  input_data   String?   @db.LongText
+  output_data  String?   @db.LongText
+  user_output  String?   @db.LongText
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  user_info    user_info @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "judge_case_ibfk_1")
+  problem      problem   @relation(fields: [pid], references: [id], onDelete: Cascade, map: "judge_case_ibfk_2")
+  judge        judge     @relation(fields: [submit_id], references: [submit_id], onDelete: Cascade, map: "judge_case_ibfk_3")
+
+  @@id([id, submit_id, uid, pid])
+  @@index([case_id], map: "case_id")
+  @@index([uid], map: "judge_case_ibfk_1")
+  @@index([pid], map: "judge_case_ibfk_2")
+  @@index([submit_id], map: "judge_case_ibfk_3")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model judge_server {
+  id              Int       @id @default(autoincrement())
+  name            String?   @db.VarChar(255)
+  ip              String    @db.VarChar(255)
+  port            Int
+  url             String?   @db.VarChar(255)
+  cpu_core        Int?      @default(0)
+  task_number     Int       @default(0)
+  max_task_number Int
+  status          Int?      @default(0)
+  is_remote       Boolean?
+  cf_submittable  Boolean?  @default(true)
+  gmt_create      DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified    DateTime? @default(now()) @db.DateTime(0)
+
+  @@index([is_remote], map: "index_judge_remote")
+  @@index([url], map: "index_judge_url")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model language {
+  id               BigInt             @id @default(autoincrement()) @db.UnsignedBigInt
+  content_type     String?            @db.VarChar(255)
+  description      String?            @db.VarChar(255)
+  name             String?            @db.VarChar(255)
+  compile_command  String?            @db.MediumText
+  template         String?            @db.LongText
+  code_template    String?            @db.LongText
+  is_spj           Boolean?           @default(false)
+  oj               String?            @db.VarChar(255)
+  seq              Int?               @default(0)
+  gmt_create       DateTime?          @default(now()) @db.DateTime(0)
+  gmt_modified     DateTime?          @default(now()) @db.DateTime(0)
+  code_template    code_template[]
+  problem_language problem_language[]
+}
+
+model mapping_training_category {
+  id                BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  tid               BigInt            @db.UnsignedBigInt
+  cid               BigInt            @db.UnsignedBigInt
+  gmt_create        DateTime?         @default(now()) @db.DateTime(0)
+  gmt_modified      DateTime?         @default(now()) @db.DateTime(0)
+  training          training          @relation(fields: [tid], references: [id], onDelete: Cascade, map: "mapping_training_category_ibfk_1")
+  training_category training_category @relation(fields: [cid], references: [id], onDelete: Cascade, map: "mapping_training_category_ibfk_2")
+
+  @@index([cid], map: "cid")
+  @@index([tid], map: "tid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model msg_remind {
+  id                                           BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  action                                       String     @db.VarChar(255)
+  source_id                                    Int?       @db.UnsignedInt
+  source_type                                  String?    @db.VarChar(255)
+  source_content                               String?    @db.VarChar(255)
+  quote_id                                     Int?       @db.UnsignedInt
+  quote_type                                   String?    @db.VarChar(255)
+  url                                          String?    @db.VarChar(255)
+  state                                        Boolean?   @default(false)
+  sender_id                                    String?    @db.VarChar(32)
+  recipient_id                                 String?    @db.VarChar(32)
+  gmt_create                                   DateTime?  @default(now()) @db.DateTime(0)
+  gmt_modified                                 DateTime?  @default(now()) @db.DateTime(0)
+  user_info_msg_remind_sender_idTouser_info    user_info? @relation("msg_remind_sender_idTouser_info", fields: [sender_id], references: [uuid], onDelete: Cascade, map: "msg_remind_ibfk_1")
+  user_info_msg_remind_recipient_idTouser_info user_info? @relation("msg_remind_recipient_idTouser_info", fields: [recipient_id], references: [uuid], onDelete: Cascade, map: "msg_remind_ibfk_2")
+
+  @@index([recipient_id], map: "recipient_id")
+  @@index([sender_id], map: "sender_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model problem {
+  id                                                    BigInt             @id @default(autoincrement()) @db.UnsignedBigInt
+  problem_id                                            String             @db.VarChar(255)
+  title                                                 String             @db.VarChar(255)
+  author                                                String?            @default("未知") @db.VarChar(255)
+  type                                                  Int                @default(0)
+  time_limit                                            Int?               @default(1000)
+  memory_limit                                          Int?               @default(65535)
+  stack_limit                                           Int?               @default(128)
+  description                                           String?            @db.LongText
+  input                                                 String?            @db.LongText
+  output                                                String?            @db.LongText
+  examples                                              String?            @db.LongText
+  is_remote                                             Boolean?           @default(false)
+  source                                                String?            @db.Text
+  difficulty                                            Int?               @default(0)
+  hint                                                  String?            @db.LongText
+  auth                                                  Int?               @default(1)
+  io_score                                              Int?               @default(100)
+  code_share                                            Boolean?           @default(true)
+  judge_mode                                            String?            @default("default") @db.VarChar(255)
+  judge_case_mode                                       String?            @default("default") @db.VarChar(255)
+  user_extra_file                                       String?            @db.MediumText
+  judge_extra_file                                      String?            @db.MediumText
+  spj_code                                              String?            @db.LongText
+  spj_language                                          String?            @db.VarChar(255)
+  is_remove_end_blank                                   Boolean?           @default(true)
+  open_case_result                                      Boolean?           @default(true)
+  is_upload_case                                        Boolean?           @default(true)
+  case_version                                          String?            @default("0") @db.VarChar(40)
+  modified_user                                         String?            @db.VarChar(255)
+  is_group                                              Boolean?           @default(false)
+  gid                                                   BigInt?            @db.UnsignedBigInt
+  apply_public_progress                                 Int?
+  is_file_io                                            Boolean?           @default(false)
+  io_read_file_name                                     String?            @db.VarChar(255)
+  io_write_file_name                                    String?            @db.VarChar(255)
+  gmt_create                                            DateTime?          @default(now()) @db.DateTime(0)
+  gmt_modified                                          DateTime?          @default(now()) @db.DateTime(0)
+  code_template                                         code_template[]
+  contest_problem                                       contest_problem[]
+  contest_record                                        contest_record[]
+  discussion                                            discussion[]
+  judge                                                 judge[]
+  judge_case                                            judge_case[]
+  user_info                                             user_info?         @relation(fields: [author], references: [username], onDelete: NoAction, map: "problem_ibfk_1")
+  group                                                 group?             @relation(fields: [gid], references: [id], onDelete: Cascade, map: "problem_ibfk_2")
+  problem_case                                          problem_case[]
+  problem_language                                      problem_language[]
+  problem_tag                                           problem_tag[]
+  training_problem_training_problem_pidToproblem        training_problem[] @relation("training_problem_pidToproblem")
+  training_problem_training_problem_display_idToproblem training_problem[] @relation("training_problem_display_idToproblem")
+  training_record                                       training_record[]
+  user_acproblem                                        user_acproblem[]
+
+  @@index([author], map: "author")
+  @@index([gid], map: "problem_ibfk_2")
+  @@index([problem_id], map: "problem_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model problem_case {
+  id           BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  pid          BigInt    @db.UnsignedBigInt
+  input        String?   @db.LongText
+  output       String?   @db.LongText
+  score        Int?
+  status       Int?      @default(0)
+  group_num    Int?      @default(1)
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  problem      problem   @relation(fields: [pid], references: [id], onDelete: Cascade, map: "problem_case_ibfk_1")
+
+  @@index([pid], map: "pid")
+}
+
+model problem_language {
+  id           BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  pid          BigInt    @db.UnsignedBigInt
+  lid          BigInt    @db.UnsignedBigInt
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  problem      problem   @relation(fields: [pid], references: [id], onDelete: Cascade, map: "problem_language_ibfk_1")
+  language     language  @relation(fields: [lid], references: [id], onDelete: Cascade, map: "problem_language_ibfk_2")
+
+  @@index([lid], map: "lid")
+  @@index([pid], map: "pid")
+}
+
+model problem_tag {
+  id           BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  pid          BigInt    @db.UnsignedBigInt
+  tid          BigInt    @db.UnsignedBigInt
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  problem      problem   @relation(fields: [pid], references: [id], onDelete: Cascade, map: "problem_tag_ibfk_1")
+  tag          tag       @relation(fields: [tid], references: [id], onDelete: Cascade, map: "problem_tag_ibfk_2")
+
+  @@index([pid], map: "pid")
+  @@index([tid], map: "tid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model remote_judge_account {
+  id           Int       @id @default(autoincrement())
+  oj           String    @db.VarChar(50)
+  username     String    @db.VarChar(255)
+  password     String    @db.VarChar(255)
+  status       Boolean   @default(true)
+  version      BigInt?   @default(0)
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model reply {
+  id                                     Int        @id @default(autoincrement())
+  comment_id                             Int
+  from_uid                               String     @db.VarChar(255)
+  from_name                              String     @db.VarChar(255)
+  from_avatar                            String?    @db.VarChar(255)
+  from_role                              String?    @db.VarChar(255)
+  to_uid                                 String     @db.VarChar(255)
+  to_name                                String     @db.VarChar(255)
+  to_avatar                              String?    @db.VarChar(255)
+  content                                String?    @db.LongText
+  status                                 Int?       @default(0)
+  gmt_create                             DateTime?  @default(now()) @db.DateTime(0)
+  gmt_modified                           DateTime?  @default(now()) @db.DateTime(0)
+  comment                                comment    @relation(fields: [comment_id], references: [id], onDelete: Cascade, map: "reply_ibfk_1")
+  user_info_reply_from_avatarTouser_info user_info? @relation("reply_from_avatarTouser_info", fields: [from_avatar], references: [avatar], onDelete: Cascade, map: "reply_ibfk_2")
+  user_info_reply_to_avatarTouser_info   user_info? @relation("reply_to_avatarTouser_info", fields: [to_avatar], references: [avatar], onDelete: Cascade, map: "reply_ibfk_3")
+
+  @@index([comment_id], map: "comment_id")
+  @@index([from_avatar], map: "from_avatar")
+  @@index([to_avatar], map: "to_avatar")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model role {
+  id           BigInt      @id
+  role         String      @db.VarChar(50)
+  description  String?     @db.VarChar(100)
+  status       Int         @default(0) @db.TinyInt
+  gmt_create   DateTime?   @default(now()) @db.DateTime(0)
+  gmt_modified DateTime?   @default(now()) @db.DateTime(0)
+  role_auth    role_auth[]
+  user_role    user_role[]
+}
+
+model role_auth {
+  id           BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  auth_id      BigInt    @db.UnsignedBigInt
+  role_id      BigInt    @db.UnsignedBigInt
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  auth         auth      @relation(fields: [auth_id], references: [id], onDelete: Cascade, map: "role_auth_ibfk_1")
+  role         role      @relation(fields: [role_id], references: [id], onDelete: NoAction, map: "role_auth_ibfk_2")
+
+  @@index([auth_id], map: "auth_id")
+  @@index([role_id], map: "role_id")
+}
+
+model session {
+  id           BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  uid          String    @db.VarChar(255)
+  user_agent   String?   @db.VarChar(512)
+  ip           String?   @db.VarChar(255)
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  user_info    user_info @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "session_ibfk_1")
+
+  @@index([uid], map: "uid")
+}
+
+model t_exam_paper {
+  id                    Int       @id @default(autoincrement())
+  name                  String?   @db.VarChar(255)
+  subject_id            Int?
+  paper_type            Int?
+  grade_level           Int?
+  score                 Int?
+  question_count        Int?
+  suggest_time          Int?
+  limit_start_time      DateTime? @db.DateTime(0)
+  limit_end_time        DateTime? @db.DateTime(0)
+  frame_text_content_id Int?
+  create_user           Int?
+  create_time           DateTime? @db.DateTime(0)
+  deleted               Boolean?  @db.Bit(1)
+  task_exam_id          Int?
+}
+
+model t_exam_paper_answer {
+  id               Int       @id @default(autoincrement())
+  exam_paper_id    Int?
+  paper_name       String?   @db.VarChar(255)
+  paper_type       Int?
+  subject_id       Int?
+  system_score     Int?
+  user_score       Int?
+  paper_score      Int?
+  question_correct Int?
+  question_count   Int?
+  do_time          Int?
+  status           Int?
+  create_user      Int?
+  create_time      DateTime? @db.DateTime(0)
+  task_exam_id     Int?
+}
+
+model t_exam_paper_question_customer_answer {
+  id                       Int       @id @default(autoincrement())
+  question_id              Int?
+  exam_paper_id            Int?
+  exam_paper_answer_id     Int?
+  question_type            Int?
+  subject_id               Int?
+  customer_score           Int?
+  question_score           Int?
+  question_text_content_id Int?
+  answer                   String?   @db.VarChar(255)
+  text_content_id          Int?
+  do_right                 Boolean?  @db.Bit(1)
+  create_user              Int?
+  create_time              DateTime? @db.DateTime(0)
+  item_order               Int?
+}
+
+model t_question {
+  id                   Int       @id @default(autoincrement())
+  question_type        Int?
+  subject_id           Int?
+  score                Int?
+  grade_level          Int?
+  difficult            Int?
+  correct              String?   @db.Text
+  info_text_content_id Int?
+  create_user          Int?
+  status               Int?
+  create_time          DateTime? @db.DateTime(0)
+  deleted              Boolean?  @db.Bit(1)
+}
+
+model t_subject {
+  id         Int      @id @default(autoincrement())
+  name       String?  @db.VarChar(255)
+  level      Int?
+  level_name String?  @db.VarChar(255)
+  item_order Int?
+  deleted    Boolean? @db.Bit(1)
+}
+
+model t_task_exam {
+  id                    Int       @id @default(autoincrement())
+  title                 String?   @db.VarChar(255)
+  grade_level           Int?
+  frame_text_content_id Int?
+  create_user           Int?
+  create_time           DateTime? @db.DateTime(0)
+  deleted               Boolean?  @db.Bit(1)
+  create_user_name      String?   @db.VarChar(255)
+}
+
+model t_task_exam_customer_answer {
+  id              Int       @id @default(autoincrement())
+  task_exam_id    Int?
+  create_user     Int?
+  create_time     DateTime? @db.DateTime(0)
+  text_content_id Int?
+}
+
+model t_text_content {
+  id          Int       @id @default(autoincrement())
+  content     String?   @db.Text
+  create_time DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tag {
+  id                 BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  name               String              @db.VarChar(255)
+  color              String?             @db.VarChar(10)
+  oj                 String?             @default("ME") @db.VarChar(255)
+  gid                BigInt?             @db.UnsignedBigInt
+  tcid               BigInt?             @db.UnsignedBigInt
+  gmt_create         DateTime?           @default(now()) @db.DateTime(0)
+  gmt_modified       DateTime?           @default(now()) @db.DateTime(0)
+  problem_tag        problem_tag[]
+  group              group?              @relation(fields: [gid], references: [id], onDelete: Cascade, map: "tag_ibfk_1")
+  tag_classification tag_classification? @relation(fields: [tcid], references: [id], map: "tag_ibfk_2")
+
+  @@unique([name, oj, gid], map: "name")
+  @@index([gid], map: "tag_ibfk_1")
+  @@index([tcid], map: "tag_ibfk_2")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tag_classification {
+  id           BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  name         String    @db.VarChar(255)
+  oj           String    @db.VarChar(255)
+  gmt_create   DateTime? @db.DateTime(0)
+  gmt_modified DateTime? @db.DateTime(0)
+  rank         Int?
+  tag          tag[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model training {
+  id                        BigInt                      @id @default(autoincrement()) @db.UnsignedBigInt
+  title                     String?                     @db.VarChar(255)
+  description               String?                     @db.LongText
+  author                    String                      @db.VarChar(255)
+  auth                      String                      @db.VarChar(255)
+  private_pwd               String?                     @db.VarChar(255)
+  rank                      Int?                        @default(0)
+  status                    Boolean?                    @default(true)
+  is_group                  Boolean?                    @default(false)
+  gid                       BigInt?                     @db.UnsignedBigInt
+  gmt_create                DateTime?                   @default(now()) @db.DateTime(0)
+  gmt_modified              DateTime?                   @default(now()) @db.DateTime(0)
+  mapping_training_category mapping_training_category[]
+  group                     group?                      @relation(fields: [gid], references: [id], onDelete: Cascade, map: "training_ibfk_1")
+  training_problem          training_problem[]
+  training_record           training_record[]
+  training_register         training_register[]
+
+  @@index([gid], map: "training_ibfk_1")
+}
+
+model training_category {
+  id                        BigInt                      @id @default(autoincrement()) @db.UnsignedBigInt
+  name                      String?                     @db.VarChar(255)
+  color                     String?                     @db.VarChar(255)
+  gid                       BigInt?                     @db.UnsignedBigInt
+  gmt_create                DateTime?                   @default(now()) @db.DateTime(0)
+  gmt_modified              DateTime?                   @default(now()) @db.DateTime(0)
+  mapping_training_category mapping_training_category[]
+  group                     group?                      @relation(fields: [gid], references: [id], onDelete: Cascade, map: "training_category_ibfk_1")
+
+  @@index([gid], map: "training_category_ibfk_1")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model training_problem {
+  id                                           BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  tid                                          BigInt            @db.UnsignedBigInt
+  pid                                          BigInt            @db.UnsignedBigInt
+  rank                                         Int?              @default(0)
+  display_id                                   String            @db.VarChar(255)
+  gmt_create                                   DateTime?         @default(now()) @db.DateTime(0)
+  gmt_modified                                 DateTime?         @default(now()) @db.DateTime(0)
+  training                                     training          @relation(fields: [tid], references: [id], onDelete: Cascade, map: "training_problem_ibfk_1")
+  problem_training_problem_pidToproblem        problem           @relation("training_problem_pidToproblem", fields: [pid], references: [id], onDelete: Cascade, map: "training_problem_ibfk_2")
+  problem_training_problem_display_idToproblem problem           @relation("training_problem_display_idToproblem", fields: [display_id], references: [problem_id], onDelete: Cascade, map: "training_problem_ibfk_3")
+  training_record                              training_record[]
+
+  @@index([display_id], map: "display_id")
+  @@index([pid], map: "pid")
+  @@index([tid], map: "tid")
+}
+
+model training_record {
+  id               BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  tid              BigInt           @db.UnsignedBigInt
+  tpid             BigInt           @db.UnsignedBigInt
+  pid              BigInt           @db.UnsignedBigInt
+  uid              String           @db.VarChar(255)
+  submit_id        BigInt           @db.UnsignedBigInt
+  gmt_create       DateTime?        @default(now()) @db.DateTime(0)
+  gmt_modified     DateTime?        @default(now()) @db.DateTime(0)
+  training         training         @relation(fields: [tid], references: [id], onDelete: Cascade, map: "training_record_ibfk_1")
+  training_problem training_problem @relation(fields: [tpid], references: [id], onDelete: Cascade, map: "training_record_ibfk_2")
+  problem          problem          @relation(fields: [pid], references: [id], onDelete: Cascade, map: "training_record_ibfk_3")
+  user_info        user_info        @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "training_record_ibfk_4")
+  judge            judge            @relation(fields: [submit_id], references: [submit_id], onDelete: Cascade, map: "training_record_ibfk_5")
+
+  @@index([pid], map: "pid")
+  @@index([submit_id], map: "submit_id")
+  @@index([tid], map: "tid")
+  @@index([tpid], map: "tpid")
+  @@index([uid], map: "uid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model training_register {
+  id           BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  tid          BigInt    @db.UnsignedBigInt
+  uid          String    @db.VarChar(255)
+  status       Boolean?  @default(true)
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  training     training  @relation(fields: [tid], references: [id], onDelete: Cascade, map: "training_register_ibfk_1")
+  user_info    user_info @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "training_register_ibfk_2")
+
+  @@index([tid], map: "tid")
+  @@index([uid], map: "uid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model user_acproblem {
+  id           BigInt    @id @default(autoincrement())
+  uid          String    @db.VarChar(32)
+  pid          BigInt    @db.UnsignedBigInt
+  submit_id    BigInt    @db.UnsignedBigInt
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  problem      problem   @relation(fields: [pid], references: [id], onDelete: Cascade, map: "user_acproblem_ibfk_2")
+  judge        judge     @relation(fields: [submit_id], references: [submit_id], onDelete: Cascade, map: "user_acproblem_ibfk_3")
+
+  @@index([pid], map: "pid")
+  @@index([submit_id], map: "submit_id")
+  @@index([uid], map: "uid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model user_info {
+  uuid                                                      String                @id @db.VarChar(32)
+  username                                                  String                @unique(map: "USERNAME_UNIQUE") @db.VarChar(100)
+  password                                                  String                @db.VarChar(100)
+  nickname                                                  String?               @db.VarChar(100)
+  school                                                    String?               @db.VarChar(100)
+  course                                                    String?               @db.VarChar(100)
+  number                                                    String?               @db.VarChar(20)
+  realname                                                  String?               @db.VarChar(100)
+  gender                                                    String                @default("secrecy") @db.VarChar(20)
+  github                                                    String?               @db.VarChar(255)
+  blog                                                      String?               @db.VarChar(255)
+  cf_username                                               String?               @db.VarChar(255)
+  email                                                     String?               @unique(map: "EMAIL_UNIQUE") @db.VarChar(320)
+  avatar                                                    String?               @unique(map: "avatar") @db.VarChar(255)
+  signature                                                 String?               @db.MediumText
+  title_name                                                String?               @db.VarChar(255)
+  title_color                                               String?               @db.VarChar(255)
+  status                                                    Int                   @default(0)
+  gmt_create                                                DateTime?             @default(now()) @db.DateTime(0)
+  gmt_modified                                              DateTime?             @default(now()) @db.DateTime(0)
+  admin_sys_notice_admin_sys_notice_recipient_idTouser_info admin_sys_notice[]    @relation("admin_sys_notice_recipient_idTouser_info")
+  admin_sys_notice_admin_sys_notice_admin_idTouser_info     admin_sys_notice[]    @relation("admin_sys_notice_admin_idTouser_info")
+  announcement                                              announcement[]
+  comment                                                   comment[]
+  comment_like                                              comment_like[]
+  contest                                                   contest[]
+  contest_explanation                                       contest_explanation[]
+  contest_print                                             contest_print[]
+  contest_record                                            contest_record[]
+  contest_register                                          contest_register[]
+  discussion_discussion_uidTouser_info                      discussion[]          @relation("discussion_uidTouser_info")
+  discussion_discussion_avatarTouser_info                   discussion[]          @relation("discussion_avatarTouser_info")
+  discussion_like                                           discussion_like[]
+  discussion_report                                         discussion_report[]
+  file                                                      file[]
+  group                                                     group[]
+  group_member                                              group_member[]
+  judge_judge_uidTouser_info                                judge[]               @relation("judge_uidTouser_info")
+  judge_judge_usernameTouser_info                           judge[]               @relation("judge_usernameTouser_info")
+  judge_case                                                judge_case[]
+  msg_remind_msg_remind_sender_idTouser_info                msg_remind[]          @relation("msg_remind_sender_idTouser_info")
+  msg_remind_msg_remind_recipient_idTouser_info             msg_remind[]          @relation("msg_remind_recipient_idTouser_info")
+  problem                                                   problem[]
+  reply_reply_from_avatarTouser_info                        reply[]               @relation("reply_from_avatarTouser_info")
+  reply_reply_to_avatarTouser_info                          reply[]               @relation("reply_to_avatarTouser_info")
+  session                                                   session[]
+  training_record                                           training_record[]
+  training_register                                         training_register[]
+  user_record                                               user_record[]
+  user_role                                                 user_role[]
+  user_sys_notice                                           user_sys_notice[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model user_record {
+  id           BigInt    @default(autoincrement())
+  uid          String    @db.VarChar(32)
+  rating       Int?
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  user_info    user_info @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "user_record_ibfk_1")
+
+  @@id([id, uid])
+  @@index([uid], map: "uid")
+}
+
+model user_role {
+  id           BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  uid          String    @db.VarChar(32)
+  role_id      BigInt    @db.UnsignedBigInt
+  gmt_create   DateTime? @default(now()) @db.DateTime(0)
+  gmt_modified DateTime? @default(now()) @db.DateTime(0)
+  user_info    user_info @relation(fields: [uid], references: [uuid], onDelete: Cascade, map: "user_role_ibfk_1")
+  role         role      @relation(fields: [role_id], references: [id], onDelete: Cascade, map: "user_role_ibfk_2")
+
+  @@index([role_id], map: "role_id")
+  @@index([uid], map: "uid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model user_sys_notice {
+  id               BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  sys_notice_id    BigInt?           @db.UnsignedBigInt
+  recipient_id     String?           @db.VarChar(32)
+  type             String?           @db.VarChar(255)
+  state            Boolean?          @default(false)
+  gmt_create       DateTime?         @default(now()) @db.DateTime(0)
+  gmt_modified     DateTime?         @default(now()) @db.DateTime(0)
+  admin_sys_notice admin_sys_notice? @relation(fields: [sys_notice_id], references: [id], onDelete: Cascade, map: "user_sys_notice_ibfk_1")
+  user_info        user_info?        @relation(fields: [recipient_id], references: [uuid], onDelete: Cascade, map: "user_sys_notice_ibfk_2")
+
+  @@index([recipient_id], map: "recipient_id")
+  @@index([sys_notice_id], map: "sys_notice_id")
+}

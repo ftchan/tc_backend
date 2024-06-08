@@ -17,17 +17,15 @@ export class JwtMiddleware {
         throw new httpError.UnauthorizedError();
       }
 
-      const token = ctx.get('authorization').trim();
+      const token = ctx.get('authorization');
 
       if (token.length <= 2) {
         throw new httpError.UnauthorizedError();
       }
 
-      try {
-        await this.jwtService.verify(token, {
-          complete: true,
-        });
-      } catch (error) {
+      const decoded = this.jwtService.decodeSync(token, { complete: true });
+
+      if (!decoded?.payload.sub) {
         throw new httpError.UnauthorizedError();
       }
 
