@@ -3,6 +3,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model admin_sys_notice {
   id                                                 BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
@@ -67,11 +71,11 @@ model code_template {
   status       Boolean?  @default(false)
   gmt_create   DateTime? @default(now()) @db.DateTime(0)
   gmt_modified DateTime? @default(now()) @db.DateTime(0)
-  problem      problem   @relation(fields: [pid], references: [id], onDelete: Cascade, map: "code_template_ibfk_1")
-  language     language  @relation(fields: [lid], references: [id], onDelete: Cascade, map: "code_template_ibfk_2")
-
-  @@index([lid], map: "lid")
+  problem      problem   @relation(fields: [pid], references: [id], onDelete: Cascade, map: "code_template_ibfk_3")
+  language     language  @relation(fields: [lid], references: [id], onDelete: Cascade, map: "code_template_ibfk_4")
   @@index([pid], map: "pid")
+  @@index([lid], map: "lid")
+  @@map("model_code_template")
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -158,6 +162,7 @@ model contest {
   contest_score        contest_score[]
 
   @@id([id, uid])
+  @@unique([id], map: "id")
   @@index([gid], map: "contest_ibfk_2")
   @@index([uid], map: "uid")
 }
@@ -222,6 +227,7 @@ model contest_problem {
   contest_record contest_record[]
 
   @@id([id, cid, pid])
+  @@unique([id], map: "id")
   @@unique([display_id, cid, pid], map: "display_id")
   @@index([cid], map: "contest_problem_ibfk_1")
   @@index([pid], map: "contest_problem_ibfk_2")
@@ -466,6 +472,7 @@ model judge {
   user_acproblem                      user_acproblem[]
 
   @@id([submit_id, pid, display_pid, uid, cid])
+  @@unique([submit_id], map: "submitid")
   @@index([gid], map: "judge_ibfk_4")
   @@index([pid], map: "pid")
   @@index([uid], map: "uid")
@@ -536,9 +543,10 @@ model language {
   seq              Int?               @default(0)
   gmt_create       DateTime?          @default(now()) @db.DateTime(0)
   gmt_modified     DateTime?          @default(now()) @db.DateTime(0)
-  code_template    code_template[]
   problem_language problem_language[]
+  model_code_template code_template[]
 }
+
 
 model mapping_training_category {
   id                BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
@@ -632,6 +640,7 @@ model problem {
   user_acproblem                                        user_acproblem[]
 
   @@index([author], map: "author")
+  @@unique([problem_id], map: "problem_id_ibfk_1")
   @@index([gid], map: "problem_ibfk_2")
   @@index([problem_id], map: "problem_id")
 }
@@ -660,7 +669,6 @@ model problem_language {
   gmt_modified DateTime? @default(now()) @db.DateTime(0)
   problem      problem   @relation(fields: [pid], references: [id], onDelete: Cascade, map: "problem_language_ibfk_1")
   language     language  @relation(fields: [lid], references: [id], onDelete: Cascade, map: "problem_language_ibfk_2")
-
   @@index([lid], map: "lid")
   @@index([pid], map: "pid")
 }
